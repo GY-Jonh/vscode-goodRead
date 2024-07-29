@@ -7,8 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let showMulu = true;
   const prevChapter = document.getElementById("prevChapter"); // 上一章按钮
   let nextChapter = document.getElementById("nextChapter"); // 下一章按钮
-  const prevChapter2 = document.getElementById("prevChapter2"); // 上一章按钮2
-  let nextChapter2 = document.getElementById("nextChapter2"); // 下一章按钮2
   const chapterList = document.getElementById("chapterList"); // 目录列表模块
   const chapterContent = document.getElementById("chapterContent"); // 内容模块
   const chapterContentDiv = document.getElementById("chapter-content"); // 内容最外层模块
@@ -44,13 +42,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "ArrowLeft") {
+      console.log("左箭头键被按下");
+      // 在这里添加处理左箭头键的逻辑
+      if (currentIndex !== 0) {
+        currentIndex -= 1;
+        prevOrNext(currentIndex);
+      }
+    } else if (event.key === "ArrowRight") {
+      console.log("右箭头键被按下");
+      // 在这里添加处理右箭头键的逻辑
+      currentIndex += 1;
+      prevOrNext(currentIndex);
+    }
+  });
+
   const prevOrNext = (index) => {
     if (index === 0) {
       prevChapter.style.display = "none";
-      prevChapter2.style.display = "none";
     } else if (index > 0) {
       prevChapter.style.display = "block";
-      prevChapter2.style.display = "block";
     }
     const targetChapter = document.getElementById(`chapterId${index}`); // 假设章节元素的id为chapterId
     const chapterTop = targetChapter.offsetTop;
@@ -76,14 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     prevOrNext(currentIndex);
   });
-  prevChapter2.addEventListener("click", () => {
-    currentIndex -= 1;
-    prevOrNext(currentIndex);
-  });
-  nextChapter2.addEventListener("click", () => {
-    currentIndex += 1;
-    prevOrNext(currentIndex);
-  });
 
   window.addEventListener("message", (event) => {
     const message = event.data;
@@ -104,14 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
       link.href = "#";
       link.textContent = chapter.title;
       link.addEventListener("click", () => {
-        currentIndex = chapters.indexOf(chapter);
-        vscode.postMessage(
-          {
-            command: "gotoChapter",
-            index: currentIndex,
-          },
-          "*",
-        );
+        currentIndex = index;
+        prevOrNext(currentIndex);
       });
       vscode.postMessage({ command: "gotoChapter", index: currentIndex }, "*");
       li.appendChild(link);

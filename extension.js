@@ -149,8 +149,8 @@ function getWebviewContent(webview, chapters) {
           </div>
           <pre id="chapterContent"></pre>
           <div class="button-group">
-            <button id="prevChapter2">上一章</button>
-            <button id="nextChapter2">下一章</button>
+            <span class="prevChapter2">按左键 -> 上一章</span>
+            <span class="nextChapter2">按右键 -> 下一章</span>
           </div>
         </div>
       </div>

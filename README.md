@@ -8,10 +8,12 @@
 4. 支持目录
 5. 支持目录跳转
 6. 支持目录隐藏
+7. 支持快捷键翻页（左键翻页，右键翻页）
 
 ## Extension Settings 
 
-* `extension.readNovel`: 命令面板输入这个，上传txt文件.
+* `Ctrl + Shift + P`：快捷键打开命令面板
+* `extension.readNovel`: 命令面板输入这个，上传小说txt文件.
 
 ## Known Issues
 
