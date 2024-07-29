@@ -10,13 +10,17 @@
 6. 支持目录隐藏
 7. 支持快捷键翻页（左键翻页，右键翻页）
 
-<img src="demo.png" alt="这是一个示例图片">
 
 
 ## Extension Settings 
 
 * `Ctrl + Shift + P`：快捷键打开命令面板
 * `extension.readNovel`: 命令面板输入这个，上传小说txt文件.
+
+
+<img src="demo2.jpg" alt="这是一个示例图片">
+
+<img src="demo.png" alt="这是一个示例图片">
 
 ## Known Issues
 

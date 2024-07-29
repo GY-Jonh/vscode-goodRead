@@ -15,7 +15,7 @@
     "commands": [
       {
         "command": "extension.readNovel",
-        "title": "goodRead，点击选择书籍"
+        "title": "goodRead，点击上传书籍"
       }
     ],
     "configuration": {
