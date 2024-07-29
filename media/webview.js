@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const chapterList = document.getElementById("chapterList"); // 目录列表模块
   const chapterContent = document.getElementById("chapterContent"); // 内容模块
   const chapterContentDiv = document.getElementById("chapter-content"); // 内容最外层模块
+  const prevChapter2 = document.getElementById("prevChapter2"); // 上一章按钮2
+  let nextChapter2 = document.getElementById("nextChapter2"); // 下一章按钮2
 
   const searchInput = document.getElementById("search"); // 搜索框
   const searchBtn = document.getElementById("searchBtn"); // 搜索按钮
@@ -24,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
       chapterList.style.display = "block";
     }
     showMulu = !showMulu;
+    muluBtn.blur();
   });
 
   searchBtn.addEventListener("click", () => {
@@ -61,8 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const prevOrNext = (index) => {
     if (index === 0) {
       prevChapter.style.display = "none";
+      prevChapter2.style.display = "none";
     } else if (index > 0) {
       prevChapter.style.display = "block";
+      prevChapter2.style.display = "block";
     }
     const targetChapter = document.getElementById(`chapterId${index}`); // 假设章节元素的id为chapterId
     const chapterTop = targetChapter.offsetTop;
@@ -80,13 +85,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   prevChapter.addEventListener("click", () => {
     currentIndex -= 1;
-
     prevOrNext(currentIndex);
+    prevChapter.blur();
   });
   nextChapter.addEventListener("click", () => {
     currentIndex += 1;
-
     prevOrNext(currentIndex);
+    nextChapter.blur();
+  });
+  prevChapter2.addEventListener("click", () => {
+    currentIndex -= 1;
+    prevOrNext(currentIndex);
+    prevChapter2.blur();
+  });
+  nextChapter2.addEventListener("click", () => {
+    currentIndex += 1;
+    prevOrNext(currentIndex);
+    nextChapter2.blur();
   });
 
   window.addEventListener("message", (event) => {
