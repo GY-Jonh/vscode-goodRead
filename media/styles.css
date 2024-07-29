@@ -1,0 +1,60 @@
+/* media/styles.css */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+}
+*{
+  box-sizing: border-box;
+}
+.container,.flex{
+  display: flex;
+}
+.flex1{
+  flex: 1;
+}
+.search-group{
+  position: fixed;
+    top: 10px;
+}
+#chapterList {
+  position: relative;
+  margin-top: 40px;
+  height: 100vh;
+  padding: 20px;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+}
+#chapterList li{
+  width: 200px;
+  margin: 5px 0;
+  
+}
+#chapterList li:hover{
+  background-color: #f5f5f5;
+}
+#chapter-content{
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+#chapterContent {
+  font-size: 18px;
+  padding: 20px;
+  word-break: break-all;
+  white-space: break-spaces;
+}
+.button-group{
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+#prevChapter,#prevChapter2{
+  display: none;
+}
+#prevChapter,#mulu,#nextChapter,#prevChapter2,#mulu2,#nextChapter2{
+  margin-right: 20px;
+}
