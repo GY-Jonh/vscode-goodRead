@@ -134,7 +134,7 @@ function getWebviewContent(webview, chapters) {
       <link rel="stylesheet" href="${styleSrc}">
     </head>
     <body>
-      <div class="container">
+      <div id='container' class="container">
         <div id="chapterList">
           <div class='flex search-group' >
             <input id='search' class='flex1' />

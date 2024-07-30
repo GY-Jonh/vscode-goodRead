@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let filechapters = []; // 文件章节列表
   let currentIndex = 0; // 当前阅读的章节索引
   let showMulu = true;
+
+  const container = document.getElementById("container");
   const prevChapter = document.getElementById("prevChapter"); // 上一章按钮
   let nextChapter = document.getElementById("nextChapter"); // 下一章按钮
   const chapterList = document.getElementById("chapterList"); // 目录列表模块
@@ -46,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.addEventListener("keydown", function (event) {
+    console.log(event.ctrlKey, event.shiftKey, event.key);
     if (event.key === "ArrowLeft") {
       console.log("左箭头键被按下");
       // 在这里添加处理左箭头键的逻辑
@@ -58,6 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
       // 在这里添加处理右箭头键的逻辑
       currentIndex += 1;
       prevOrNext(currentIndex);
+    } else if (event.ctrlKey && event.shiftKey && event.key === "Z") {
+      console.log("Ctrl + Shift + Z 被触发");
+      container.style.display =
+        container.style.display === "none" ? "flex" : "none";
+      event.preventDefault();
     }
   });
 
