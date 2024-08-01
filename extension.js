@@ -66,6 +66,18 @@ function readAndParseFile(filePath) {
   });
 }
 
+function readFile(filePath) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, (err, buffer) => {
+      if (err) return reject(err);
+      const encoding = detectEncoding(buffer);
+      const data = iconv.decode(buffer, encoding);
+
+      resolve(data);
+    });
+  });
+}
+
 // 辅助函数，从章节标题中提取数字
 function extractChapterNumber(title) {
   const numberMatch = title.match(/\d+/);
@@ -117,7 +129,7 @@ function gotoChapter(webview, chapters, index) {
   webview.postMessage({ command: "showChapter", chapter });
 }
 
-function getWebviewContent(webview, chapters) {
+async function getWebviewContent(webview, chapters) {
   const scriptUri = vscode.Uri.file(
     path.join(__dirname, "media", "webview.js"),
   );
@@ -125,6 +137,12 @@ function getWebviewContent(webview, chapters) {
 
   const styleUri = vscode.Uri.file(path.join(__dirname, "media", "styles.css"));
   const styleSrc = webview.asWebviewUri(styleUri).toString();
+
+  // 下面方法可以获取react打包的静态资源html文件的字符串
+  // let winPath = scriptUri.path.replace(/\//g, "\\");
+  // winPath = winPath.slice(1);
+  // const a = await readFile(winPath);
+
   return `
     <!DOCTYPE html>
     <html lang="zh-Hans">
