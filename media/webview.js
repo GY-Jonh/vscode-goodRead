@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  const prevOrNext = (index) => {
+  const showBtns = (index) => {
     if (index === 0) {
       prevChapter.style.display = "none";
       prevChapter2.style.display = "none";
@@ -76,6 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
       prevChapter.style.display = "block";
       prevChapter2.style.display = "block";
     }
+  };
+  const prevOrNext = (index) => {
+    showBtns(index);
     const targetChapter = document.getElementById(`chapterId${index}`); // 假设章节元素的id为chapterId
     const chapterTop = targetChapter.offsetTop;
     chapterList.scrollTop = chapterTop; // 选中的章节定位置顶
@@ -117,6 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
       case "showChapter":
         chapterContent.innerHTML = message.chapter.content;
         currentIndex = message.index;
+
+        showBtns(currentIndex);
       default:
         break;
     }

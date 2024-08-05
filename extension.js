@@ -262,6 +262,14 @@ MySidebarViewProvider.prototype = {
       retainContextWhenHidden: true, // 关键设置
     };
 
+    this._view.webview.onDidReceiveMessage((message) => {
+      switch (message.command) {
+        case "uoload":
+          vscode.commands.executeCommand("extension.readNovel1", message.data);
+          break;
+      }
+    });
+    this._view.webview.html = this.getWebviewContent(this._view.webview);
     // 创建工具栏项
     // const buttonItem = new vscode.WebviewViewToolbarItem(
     //   vscode.ThemeIcon.Folder,
@@ -296,6 +304,35 @@ MySidebarViewProvider.prototype = {
 
     this._view.webview.html = getWebviewContent(this._view.webview, chapters);
     this._view.reveal(column);
+  },
+  getWebviewContent: function (webview) {
+    const scriptUri = vscode.Uri.file(
+      path.join(__dirname, "init", "webview.js"),
+    );
+    const scriptSrc = webview.asWebviewUri(scriptUri).toString();
+
+    const styleUri = vscode.Uri.file(
+      path.join(__dirname, "init", "styles.css"),
+    );
+    const styleSrc = webview.asWebviewUri(styleUri).toString();
+
+    return `
+      <!DOCTYPE html>
+      <html lang="zh-Hans">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="${styleSrc}">
+      </head>
+      <body>
+        <div id='container' class="container">
+          <button id="upLoad">上传</button>
+          <div id='loader' class="loader"></div>
+        </div>
+        <script src="${scriptSrc}"></script>
+      </body>
+      </html>
+    `;
   },
 };
 
