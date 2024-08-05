@@ -4,6 +4,7 @@
   "description": "",
   "version": "0.0.1",
   "engines": {
+    "node": ">=14.0.0",
     "vscode": "^1.91.0"
   },
   "categories": [
@@ -15,9 +16,38 @@
     "commands": [
       {
         "command": "extension.readNovel",
-        "title": "goodRead，点击上传书籍"
+        "title": "goodRead",
+        "icon": {
+          "light": "./icon.svg",
+          "dark": "./icon.svg"
+        }
+      },
+      {
+        "command": "extension.readNovel1",
+        "title": "goodRead",
+        "icon": {
+          "light": "./icon.svg",
+          "dark": "./icon.svg"
+        }
+      },
+      {
+        "command": "extension.showMySidebar",
+        "title": "goodRead",
+        "icon": {
+          "light": "./icon.svg",
+          "dark": "./icon.svg"
+        }
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "my-sidebar",
+          "title": "goodRead",
+          "icon": "./icon.svg"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "界面",
@@ -28,6 +58,16 @@
           "description": "Enable the Novel Reader view."
         }
       }
+    },
+    "views": {
+      "my-sidebar": [
+        {
+          "type": "webview",
+          "id": "my-sidebar-view",
+          "name": "",
+          "icon": "./icon.svg"
+        }
+      ]
     }
   },
   "scripts": {

@@ -30,6 +30,7 @@ body {
   padding: 20px;
   border-right: 1px solid #ccc;
   overflow-y: auto;
+  display: none;
 }
 #chapterList li{
   width: 200px;

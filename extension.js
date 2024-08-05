@@ -6,30 +6,11 @@ const fs = require("fs");
 const iconv = require("iconv-lite");
 const jschardet = require("jschardet");
 
-function activate(context) {
-  let disposable = vscode.commands.registerCommand(
-    "extension.readNovel",
-    async () => {
-      const fileUri = await vscode.window.showOpenDialog({
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false,
-      });
-      if (fileUri && fileUri.length > 0) {
-        const filePath = fileUri[0].fsPath;
-        try {
-          const chapters = await readAndParseFile(filePath);
-          showNovelInWebview(chapters);
-        } catch (error) {
-          vscode.window.showErrorMessage("Failed to read and parse the novel.");
-        }
-      }
-    },
-  );
-
-  context.subscriptions.push(disposable);
-}
-
+let sidebarViewProvider = null;
+let column = null;
+let currentIndex = 0;
+// const globalState = vscode.Memento.global();
+console.log("重新进来extension.js");
 function readAndParseFile(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, (err, buffer) => {
@@ -91,19 +72,7 @@ function detectEncoding(buffer) {
   return result.encoding || "utf-8"; // 如果检测失败，默认使用 utf-8
 }
 
-function showNovelInWebview(chapters) {
-  const webviewPanel = vscode.window.createWebviewPanel(
-    "novelReader",
-    "reading",
-    vscode.ViewColumn.One,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      // 添加这一行以允许加载本地资源
-      localResourceRoots: [vscode.Uri.file(path.join(__dirname, "media"))],
-    },
-  );
-
+function showNovelInWebview(chapters, webviewPanel) {
   webviewPanel.webview.onDidReceiveMessage((message) => {
     switch (message.command) {
       case "fetchChapters":
@@ -121,15 +90,40 @@ function showNovelInWebview(chapters) {
 
   webviewPanel.webview.html = getWebviewContent(webviewPanel.webview, chapters);
   webviewPanel.reveal();
-  console.log("加载完html了");
 }
+
+const getDataFromGlobalState = () => {
+  const extension = vscode.extensions.getExtension("my-sidebar-view");
+  let currentIndex = 0;
+  if (extension) {
+    const globalState = extension.storage.globalState;
+    currentIndex = globalState.get("currentIndex", 0);
+  }
+  return currentIndex;
+};
+
+const saveDataToGlobalState = (index) => {
+  const extension = vscode.extensions.getExtension("my-sidebar-view");
+  if (extension) {
+    const globalState = extension.storage.globalState;
+    // 更新状态
+    globalState.update("currentIndex", index);
+  }
+};
 
 function gotoChapter(webview, chapters, index) {
-  const chapter = chapters[index];
-  webview.postMessage({ command: "showChapter", chapter });
+  if (index !== 0) {
+    currentIndex = index;
+  }
+  const chapter = chapters[index === 0 ? currentIndex : index];
+  webview.postMessage({
+    command: "showChapter",
+    chapter,
+    index: currentIndex,
+  });
 }
 
-async function getWebviewContent(webview, chapters) {
+function getWebviewContent(webview, chapters) {
   const scriptUri = vscode.Uri.file(
     path.join(__dirname, "media", "webview.js"),
   );
@@ -162,7 +156,7 @@ async function getWebviewContent(webview, chapters) {
         <div id="chapter-content">
           <div class="button-group">
             <button id="prevChapter">上一章</button>
-            <button id="mulu">隐藏目录</button>
+            <button id="mulu">显示目录</button>
             <button id="nextChapter">下一章</button>
           </div>
           <pre id="chapterContent"></pre>
@@ -181,6 +175,129 @@ async function getWebviewContent(webview, chapters) {
     </html>
   `;
 }
+
+function activate(context) {
+  console.log("重新进来activate");
+  let disposable = vscode.commands.registerCommand(
+    "extension.readNovel",
+    async () => {
+      const fileUri = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+      });
+      if (fileUri && fileUri.length > 0) {
+        const filePath = fileUri[0].fsPath;
+        try {
+          const chapters = await readAndParseFile(filePath);
+          const webviewPanel = vscode.window.createWebviewPanel(
+            "novelReader",
+            "reading",
+            vscode.ViewColumn.One,
+            {
+              enableScripts: true,
+              retainContextWhenHidden: true,
+              // 添加这一行以允许加载本地资源
+              localResourceRoots: [
+                vscode.Uri.file(path.join(__dirname, "media")),
+              ],
+            },
+          );
+          showNovelInWebview(chapters, webviewPanel);
+        } catch (error) {
+          vscode.window.showErrorMessage("Failed to read and parse the novel.");
+        }
+      }
+    },
+  );
+
+  context.subscriptions.push(disposable);
+  sidebarViewProvider = new MySidebarViewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      "my-sidebar-view",
+      sidebarViewProvider,
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.showMySidebar", function () {
+      column = vscode.window.activeTextEditor
+        ? vscode.window.activeTextEditor.viewColumn
+        : undefined;
+      const view = vscode.window.createWebviewView("my-sidebar-view");
+      view.reveal(column);
+    }),
+  );
+  let disposable1 = vscode.commands.registerCommand(
+    "extension.readNovel1",
+    async () => {
+      const fileUri = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: false,
+      });
+      if (fileUri && fileUri.length > 0) {
+        const filePath = fileUri[0].fsPath;
+        try {
+          const chapters = await readAndParseFile(filePath);
+          sidebarViewProvider.showNovelInWebview(chapters);
+        } catch (error) {
+          vscode.window.showErrorMessage("Failed to read and parse the novel.");
+        }
+      }
+    },
+  );
+  context.subscriptions.push(disposable1);
+}
+function MySidebarViewProvider(extensionUri) {
+  this._view = undefined;
+  this._extensionUri = extensionUri;
+}
+MySidebarViewProvider.prototype = {
+  resolveWebviewView: function (webviewView) {
+    this._view = webviewView;
+    webviewView.webview.options = {
+      enableScripts: true,
+      retainContextWhenHidden: true, // 关键设置
+    };
+
+    // 创建工具栏项
+    // const buttonItem = new vscode.WebviewViewToolbarItem(
+    //   vscode.ThemeIcon.Folder,
+    //   "上传",
+    //   "extension.readNovel",
+    // );
+
+    // // 添加工具栏项到 Webview 视图
+    // webviewView.webview.toolbarItems = [buttonItem];
+  },
+
+  revive: function (panel) {
+    if (panel) {
+      this._view = panel;
+    }
+  },
+  showNovelInWebview: function (chapters) {
+    this._view.webview.onDidReceiveMessage((message) => {
+      switch (message.command) {
+        case "fetchChapters":
+          this._view.webview.postMessage({
+            command: "chaptersLoaded",
+            chapters,
+          });
+          break;
+        case "gotoChapter":
+          gotoChapter(this._view.webview, chapters, message.index);
+          break;
+        // 其他命令...
+      }
+    });
+
+    this._view.webview.html = getWebviewContent(this._view.webview, chapters);
+    this._view.reveal(column);
+  },
+};
 
 module.exports = {
   activate,

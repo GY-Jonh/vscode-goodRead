@@ -4,8 +4,7 @@ const vscode = acquireVsCodeApi();
 document.addEventListener("DOMContentLoaded", () => {
   let filechapters = []; // 文件章节列表
   let currentIndex = 0; // 当前阅读的章节索引
-  let showMulu = true;
-
+  let showMulu = false;
   const container = document.getElementById("container");
   const prevChapter = document.getElementById("prevChapter"); // 上一章按钮
   let nextChapter = document.getElementById("nextChapter"); // 下一章按钮
@@ -117,6 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     switch (message.command) {
       case "showChapter":
         chapterContent.innerHTML = message.chapter.content;
+        currentIndex = message.index;
       default:
         break;
     }
@@ -134,10 +134,10 @@ document.addEventListener("DOMContentLoaded", () => {
         currentIndex = index;
         prevOrNext(currentIndex);
       });
-      vscode.postMessage({ command: "gotoChapter", index: currentIndex }, "*");
       li.appendChild(link);
       chapterList.appendChild(li);
     });
+    vscode.postMessage({ command: "gotoChapter", index: currentIndex }, "*");
   });
 
   function fetchChapters() {
