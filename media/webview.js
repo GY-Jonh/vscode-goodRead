@@ -87,6 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
       {
         command: "gotoChapter",
         index: index,
+        type: "click",
       },
       "*",
     );

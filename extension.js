@@ -15,6 +15,7 @@ function readAndParseFile(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, (err, buffer) => {
       if (err) return reject(err);
+      currentIndex = 0;
       const encoding = detectEncoding(buffer);
       const data = iconv.decode(buffer, encoding);
 
@@ -82,7 +83,12 @@ function showNovelInWebview(chapters, webviewPanel) {
         });
         break;
       case "gotoChapter":
-        gotoChapter(webviewPanel.webview, chapters, message.index);
+        gotoChapter(
+          webviewPanel.webview,
+          chapters,
+          message.index,
+          message.type,
+        );
         break;
       // 其他命令...
     }
@@ -111,11 +117,11 @@ const saveDataToGlobalState = (index) => {
   }
 };
 
-function gotoChapter(webview, chapters, index) {
-  if (index !== 0) {
+function gotoChapter(webview, chapters, index, type = "init") {
+  if (index !== 0 || type === "click") {
     currentIndex = index;
   }
-  const chapter = chapters[index === 0 ? currentIndex : index];
+  const chapter = chapters[currentIndex];
   webview.postMessage({
     command: "showChapter",
     chapter,
@@ -296,7 +302,12 @@ MySidebarViewProvider.prototype = {
           });
           break;
         case "gotoChapter":
-          gotoChapter(this._view.webview, chapters, message.index);
+          gotoChapter(
+            this._view.webview,
+            chapters,
+            message.index,
+            message?.type,
+          );
           break;
         // 其他命令...
       }
