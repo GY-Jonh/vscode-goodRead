@@ -21,7 +21,7 @@ function readAndParseFile(filePath) {
 
       const chapterTitles =
         data.match(
-          /^\s*(?:正文\s*)?第[\d零〇一二三四五六七八九十百千万]+章.*$(?=\n|$)/gm,
+          /^(\s*(?:正文\s*)?第[\d零〇一二三四五六七八九十百千万]+章.*$(?=\n|$))|(\s*(?:正文\s*)?第[\d]+.*$(?=\n|$))/gm,
         ) || [];
       const chapters = [];
 
