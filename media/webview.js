@@ -18,6 +18,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("searchBtn"); // 搜索按钮
   const muluBtn = document.getElementById("mulu"); // 目录按钮
 
+  // const delLineHeight = document.getElementById("delLineHeight");
+  // const addLineHeight = document.getElementById("addLineHeight");
+  const lineHeightInput = document.getElementById("lineHeightInput");
+
+  lineHeightInput.addEventListener("input", function () {
+    chapterContent.style.lineHeight = lineHeightInput.value;
+  });
+
   muluBtn.addEventListener("click", () => {
     if (showMulu) {
       muluBtn.innerHTML = "显示目录";

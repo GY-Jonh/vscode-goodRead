@@ -164,6 +164,9 @@ function getWebviewContent(webview, chapters) {
             <button id="prevChapter">上一章</button>
             <button id="mulu">显示目录</button>
             <button id="nextChapter">下一章</button>
+            <span class="lineHeight">
+              <input id='lineHeightInput' placeholder='行间距' type="number" min="1" max="3" step="0.1" />
+            </span>
           </div>
           <pre id="chapterContent"></pre>
            <div class="button-group">
