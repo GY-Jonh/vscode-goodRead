@@ -70,3 +70,6 @@ body {
 button{
   cursor: pointer;
 }
+.lineHeight{
+  margin-right: 16px;
+}

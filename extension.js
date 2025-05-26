@@ -167,6 +167,9 @@ function getWebviewContent(webview, chapters) {
             <span class="lineHeight">
               <input id='lineHeightInput' placeholder='行间距' type="number" min="1" max="3" step="0.1" />
             </span>
+            <span class="lineHeight">
+              <input id='fontSizeInput' placeholder='字体大小' type="number" min="1" max="20" step="1" />
+            </span>
           </div>
           <pre id="chapterContent"></pre>
            <div class="button-group">

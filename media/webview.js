@@ -22,8 +22,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // const addLineHeight = document.getElementById("addLineHeight");
   const lineHeightInput = document.getElementById("lineHeightInput");
 
+  const fontSizeInput = document.getElementById("fontSizeInput");
+
   lineHeightInput.addEventListener("input", function () {
     chapterContent.style.lineHeight = lineHeightInput.value;
+  });
+
+  fontSizeInput.addEventListener("input", function () {
+    chapterContent.style.fontSize = fontSizeInput.value + "px";
   });
 
   muluBtn.addEventListener("click", () => {
