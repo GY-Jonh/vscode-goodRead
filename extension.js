@@ -9,8 +9,9 @@ const jschardet = require("jschardet");
 let sidebarViewProvider = null;
 let column = null;
 let currentIndex = 0;
-// const globalState = vscode.Memento.global();
-console.log("重新进来extension.js");
+
+// 确保扩展加载时输出日志
+console.log("goodRead 扩展模块已加载");
 function readAndParseFile(filePath) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, (err, buffer) => {
@@ -21,7 +22,7 @@ function readAndParseFile(filePath) {
 
       const chapterTitles =
         data.match(
-          /^(\s*(?:正文\s*)?第[\d零〇一二两三四五六七八九十百千万]+章.*$(?=\n|$))|(\s*(?:正文\s*)?第[\d]+.*$(?=\n|$))/gm,
+          /^(\s*(?:正文\s*)?第[\d零〇一二两三四五六七八九十百千万]+章.*$(?=\n|$))|(\s*(?:正文\s*)?第[\d]+.*$(?=\n|$))/gm
         ) || [];
       const chapters = [];
 
@@ -87,7 +88,7 @@ function showNovelInWebview(chapters, webviewPanel) {
           webviewPanel.webview,
           chapters,
           message.index,
-          message.type,
+          message.type
         );
         break;
       // 其他命令...
@@ -130,137 +131,214 @@ function gotoChapter(webview, chapters, index, type = "init") {
 }
 
 function getWebviewContent(webview, chapters) {
-  const scriptUri = vscode.Uri.file(
-    path.join(__dirname, "media", "webview.js"),
-  );
-  const scriptSrc = webview.asWebviewUri(scriptUri).toString();
+  const distPath = path.join(__dirname, "dist");
+  const htmlPath = path.join(distPath, "src", "webview", "reader.html");
 
-  const styleUri = vscode.Uri.file(path.join(__dirname, "media", "styles.css"));
-  const styleSrc = webview.asWebviewUri(styleUri).toString();
-
-  // 下面方法可以获取react打包的静态资源html文件的字符串
-  // let winPath = scriptUri.path.replace(/\//g, "\\");
-  // winPath = winPath.slice(1);
-  // const a = await readFile(winPath);
-
-  return `
-    <!DOCTYPE html>
-    <html lang="zh-Hans">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="stylesheet" href="${styleSrc}">
-    </head>
-    <body>
-      <div id='container' class="container">
-        <div id="chapterList">
-          <div class='flex search-group' >
-            <input id='search' class='flex1' />
-            <button id="searchBtn">搜索</button>
-          </div>
+  // 读取构建后的 HTML 文件
+  let html = "";
+  try {
+    html = fs.readFileSync(htmlPath, "utf-8");
+  } catch (error) {
+    // 如果构建文件不存在，返回错误提示
+    return `
+      <!DOCTYPE html>
+      <html lang="zh-Hans">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body>
+        <div style="padding: 20px; text-align: center;">
+          <p>请先运行 pnpm run build 构建前端资源</p>
         </div>
-        <div id="chapter-content">
-          <div class="button-group">
-            <button id="prevChapter">上一章</button>
-            <button id="mulu">显示目录</button>
-            <button id="nextChapter">下一章</button>
-            <span class="lineHeight">
-              <input id='lineHeightInput' placeholder='行间距' type="number" min="1" max="3" step="0.1" />
-            </span>
-            <span class="lineHeight">
-              <input id='fontSizeInput' placeholder='字体大小' type="number" min="1" max="20" step="1" />
-            </span>
-          </div>
-          <pre id="chapterContent"></pre>
-           <div class="button-group">
-            <button id="prevChapter2">上一章</button>
-            <button id="nextChapter2">下一章</button>
-          </div>
-          <div class="button-group">
-            <span class="prevChapter2">按左键 -> 上一章</span>
-            <span class="nextChapter2">按右键 -> 下一章</span>
-          </div>
-        </div>
-      </div>
-      <script src="${scriptSrc}"></script>
-    </body>
-    </html>
-  `;
+      </body>
+      </html>
+    `;
+  }
+
+  // 替换资源路径
+  html = html.replace(/(src|href)="([^"]+)"/g, (match, attr, url) => {
+    // 跳过已经是完整 URL 的路径
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("vscode-webview://")
+    ) {
+      return match;
+    }
+    // 处理相对路径，去掉开头的 / 或 ./
+    const cleanUrl = url.replace(/^\.?\//, "");
+    const resourcePath = path.join(distPath, cleanUrl);
+    const resourceUri = vscode.Uri.file(resourcePath);
+    const webviewResourceUri = webview.asWebviewUri(resourceUri).toString();
+    return `${attr}="${webviewResourceUri}"`;
+  });
+
+  // 添加 CSP meta 标签（如果不存在）
+  if (!html.includes("Content-Security-Policy")) {
+    const csp = `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; style-src 'unsafe-inline' ${webview.cspSource};`;
+    html = html.replace(
+      /<head>/,
+      `<head>\n    <meta http-equiv="Content-Security-Policy" content="${csp}">`
+    );
+  }
+
+  return html;
 }
 
 function activate(context) {
-  console.log("重新进来activate");
-  let disposable = vscode.commands.registerCommand(
-    "extension.readNovel",
-    async () => {
-      const fileUri = await vscode.window.showOpenDialog({
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false,
-      });
-      if (fileUri && fileUri.length > 0) {
-        const filePath = fileUri[0].fsPath;
-        try {
-          const chapters = await readAndParseFile(filePath);
-          const webviewPanel = vscode.window.createWebviewPanel(
-            "novelReader",
-            "reading",
-            vscode.ViewColumn.One,
-            {
-              enableScripts: true,
-              retainContextWhenHidden: true,
-              // 添加这一行以允许加载本地资源
-              localResourceRoots: [
-                vscode.Uri.file(path.join(__dirname, "media")),
-              ],
-            },
-          );
-          showNovelInWebview(chapters, webviewPanel);
-        } catch (error) {
-          vscode.window.showErrorMessage("Failed to read and parse the novel.");
-        }
-      }
-    },
+  console.log("=== goodRead 扩展激活开始 ===");
+  console.log("Extension context:", context);
+  console.log("Extension path:", __dirname);
+  console.log("Extension ID:", context.extension.id);
+  console.log("Extension version:", context.extension.packageJSON.version);
+
+  // 检查关键文件是否存在
+  const distPath = path.join(__dirname, "dist");
+  const extensionJsPath = path.join(__dirname, "extension.js");
+
+  console.log("检查 dist 目录:", distPath, "存在:", fs.existsSync(distPath));
+  console.log(
+    "检查 extension.js:",
+    extensionJsPath,
+    "存在:",
+    fs.existsSync(extensionJsPath)
   );
 
-  context.subscriptions.push(disposable);
-  sidebarViewProvider = new MySidebarViewProvider(context.extensionUri);
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      "my-sidebar-view",
-      sidebarViewProvider,
-    ),
-  );
+  // 检查依赖
+  try {
+    require.resolve("iconv-lite");
+    console.log("✓ iconv-lite 依赖可用");
+  } catch (e) {
+    console.error("✗ iconv-lite 依赖不可用:", e.message);
+    vscode.window.showErrorMessage(
+      "goodRead: iconv-lite 依赖缺失，请重新打包插件"
+    );
+  }
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand("extension.showMySidebar", function () {
-      column = vscode.window.activeTextEditor
-        ? vscode.window.activeTextEditor.viewColumn
-        : undefined;
-      const view = vscode.window.createWebviewView("my-sidebar-view");
-      view.reveal(column);
-    }),
-  );
-  let disposable1 = vscode.commands.registerCommand(
-    "extension.readNovel1",
-    async () => {
-      const fileUri = await vscode.window.showOpenDialog({
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false,
-      });
-      if (fileUri && fileUri.length > 0) {
-        const filePath = fileUri[0].fsPath;
-        try {
-          const chapters = await readAndParseFile(filePath);
-          sidebarViewProvider.showNovelInWebview(chapters);
-        } catch (error) {
-          vscode.window.showErrorMessage("Failed to read and parse the novel.");
+  try {
+    require.resolve("jschardet");
+    console.log("✓ jschardet 依赖可用");
+  } catch (e) {
+    console.error("✗ jschardet 依赖不可用:", e.message);
+    vscode.window.showErrorMessage(
+      "goodRead: jschardet 依赖缺失，请重新打包插件"
+    );
+  }
+
+  if (!fs.existsSync(distPath)) {
+    const msg =
+      "goodRead: dist 目录不存在，请先运行 npm run build 构建前端资源";
+    console.error(msg);
+    vscode.window.showWarningMessage(msg);
+  }
+
+  try {
+    let disposable = vscode.commands.registerCommand(
+      "extension.readNovel",
+      async () => {
+        const fileUri = await vscode.window.showOpenDialog({
+          canSelectFiles: true,
+          canSelectFolders: false,
+          canSelectMany: false,
+        });
+        if (fileUri && fileUri.length > 0) {
+          const filePath = fileUri[0].fsPath;
+          try {
+            const chapters = await readAndParseFile(filePath);
+            const webviewPanel = vscode.window.createWebviewPanel(
+              "novelReader",
+              "reading",
+              vscode.ViewColumn.One,
+              {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                // 添加这一行以允许加载本地资源
+                localResourceRoots: [
+                  vscode.Uri.file(path.join(__dirname, "dist")),
+                ],
+              }
+            );
+            showNovelInWebview(chapters, webviewPanel);
+          } catch (error) {
+            vscode.window.showErrorMessage(
+              "Failed to read and parse the novel."
+            );
+          }
         }
       }
-    },
-  );
-  context.subscriptions.push(disposable1);
+    );
+
+    context.subscriptions.push(disposable);
+    console.log("✓ extension.readNovel 命令已注册");
+  } catch (error) {
+    console.error("✗ 注册 extension.readNovel 命令失败:", error);
+    vscode.window.showErrorMessage(`注册命令失败: ${error.message}`);
+  }
+
+  try {
+    sidebarViewProvider = new MySidebarViewProvider(context.extensionUri);
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(
+        "my-sidebar-view",
+        sidebarViewProvider
+      )
+    );
+    console.log("侧边栏视图提供者已注册");
+  } catch (error) {
+    console.error("注册侧边栏视图提供者失败:", error);
+  }
+
+  try {
+    context.subscriptions.push(
+      vscode.commands.registerCommand("extension.showMySidebar", function () {
+        column = vscode.window.activeTextEditor
+          ? vscode.window.activeTextEditor.viewColumn
+          : undefined;
+        const view = vscode.window.createWebviewView("my-sidebar-view");
+        view.reveal(column);
+      })
+    );
+    console.log("extension.showMySidebar 命令已注册");
+  } catch (error) {
+    console.error("注册 extension.showMySidebar 命令失败:", error);
+  }
+
+  try {
+    let disposable1 = vscode.commands.registerCommand(
+      "extension.readNovel1",
+      async () => {
+        const fileUri = await vscode.window.showOpenDialog({
+          canSelectFiles: true,
+          canSelectFolders: false,
+          canSelectMany: false,
+        });
+        if (fileUri && fileUri.length > 0) {
+          const filePath = fileUri[0].fsPath;
+          try {
+            const chapters = await readAndParseFile(filePath);
+            sidebarViewProvider.showNovelInWebview(chapters);
+          } catch (error) {
+            vscode.window.showErrorMessage(
+              "Failed to read and parse the novel."
+            );
+          }
+        }
+      }
+    );
+    context.subscriptions.push(disposable1);
+    console.log("✓ extension.readNovel1 命令已注册");
+  } catch (error) {
+    console.error("✗ 注册 extension.readNovel1 命令失败:", error);
+  }
+
+  // 总结
+  console.log("=== goodRead 扩展激活完成 ===");
+  console.log("已注册的命令:");
+  console.log("  - extension.readNovel");
+  console.log("  - extension.readNovel1");
+  console.log("  - extension.showMySidebar");
+  console.log("订阅数量:", context.subscriptions.length);
 }
 function MySidebarViewProvider(extensionUri) {
   this._view = undefined;
@@ -272,6 +350,7 @@ MySidebarViewProvider.prototype = {
     webviewView.webview.options = {
       enableScripts: true,
       retainContextWhenHidden: true, // 关键设置
+      localResourceRoots: [vscode.Uri.file(path.join(__dirname, "dist"))],
     };
 
     this._view.webview.onDidReceiveMessage((message) => {
@@ -312,7 +391,7 @@ MySidebarViewProvider.prototype = {
             this._view.webview,
             chapters,
             message.index,
-            message?.type,
+            message.type
           );
           break;
         // 其他命令...
@@ -323,36 +402,67 @@ MySidebarViewProvider.prototype = {
     this._view.reveal(column);
   },
   getWebviewContent: function (webview) {
-    const scriptUri = vscode.Uri.file(
-      path.join(__dirname, "init", "webview.js"),
-    );
-    const scriptSrc = webview.asWebviewUri(scriptUri).toString();
+    const distPath = path.join(__dirname, "dist");
+    const htmlPath = path.join(distPath, "src", "webview", "upload.html");
 
-    const styleUri = vscode.Uri.file(
-      path.join(__dirname, "init", "styles.css"),
-    );
-    const styleSrc = webview.asWebviewUri(styleUri).toString();
+    // 读取构建后的 HTML 文件
+    let html = "";
+    try {
+      html = fs.readFileSync(htmlPath, "utf-8");
+    } catch (error) {
+      // 如果构建文件不存在，返回错误提示
+      return `
+        <!DOCTYPE html>
+        <html lang="zh-Hans">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body>
+          <div style="padding: 20px; text-align: center;">
+            <p>请先运行 pnpm run build 构建前端资源</p>
+          </div>
+        </body>
+        </html>
+      `;
+    }
 
-    return `
-      <!DOCTYPE html>
-      <html lang="zh-Hans">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="${styleSrc}">
-      </head>
-      <body>
-        <div id='container' class="container">
-          <button id="upLoad">上传</button>
-          <div id='loader' class="loader"></div>
-        </div>
-        <script src="${scriptSrc}"></script>
-      </body>
-      </html>
-    `;
+    // 替换资源路径
+    html = html.replace(/(src|href)="([^"]+)"/g, (match, attr, url) => {
+      // 跳过已经是完整 URL 的路径
+      if (
+        url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.startsWith("vscode-webview://")
+      ) {
+        return match;
+      }
+      // 处理相对路径，去掉开头的 / 或 ./
+      const cleanUrl = url.replace(/^\.?\//, "");
+      const resourcePath = path.join(distPath, cleanUrl);
+      const resourceUri = vscode.Uri.file(resourcePath);
+      const webviewResourceUri = webview.asWebviewUri(resourceUri).toString();
+      return `${attr}="${webviewResourceUri}"`;
+    });
+
+    // 添加 CSP meta 标签（如果不存在）
+    if (!html.includes("Content-Security-Policy")) {
+      const csp = `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${webview.cspSource}; style-src 'unsafe-inline' ${webview.cspSource};`;
+      html = html.replace(
+        /<head>/,
+        `<head>\n    <meta http-equiv="Content-Security-Policy" content="${csp}">`
+      );
+    }
+
+    return html;
   },
 };
 
+function deactivate() {
+  console.log("goodRead 扩展已停用");
+}
+
 module.exports = {
   activate,
+  deactivate,
 };

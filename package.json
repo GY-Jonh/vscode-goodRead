@@ -2,22 +2,27 @@
   "name": "good-read",
   "displayName": "goodRead",
   "description": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "GY",
   "engines": {
-    "node": ">=14.0.0",
+    "node": ">=18.0.0",
     "vscode": "^1.91.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:extension.readNovel",
+    "onCommand:extension.readNovel1",
+    "onCommand:extension.showMySidebar",
+    "onView:my-sidebar-view"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
         "command": "extension.readNovel",
-        "title": "goodRead",
+        "title": "goodReadMain",
         "icon": {
           "light": "./icon.svg",
           "dark": "./icon.svg"
@@ -72,19 +77,32 @@
     }
   },
   "scripts": {
-    "package": "vsce package",
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "package": "vsce package --allow-missing-repository --no-yarn",
+    "build-package": "npm run build && vsce package --allow-missing-repository --no-yarn",
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@ant-design/icons": "^5.2.6",
+    "@rollup/rollup-win32-x64-msvc": "^4.53.3",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
     "@types/vscode": "^1.91.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
+    "antd": "^5.12.8",
     "eslint": "^8.57.0",
-    "typescript": "^5.4.5"
+    "less": "^4.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.0.8"
   },
   "dependencies": {
     "iconv-lite": "^0.6.3",

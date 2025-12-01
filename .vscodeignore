@@ -8,3 +8,10 @@ vsc-extension-quickstart.md
 **/*.map
 **/.eslintrc.json
 **/.vscode-test.*
+src/**
+pnpm-lock.yaml
+package-lock.json
+.git/**
+*.md
+!README.md
+!dist/**
