@@ -16,18 +16,16 @@
 
 ## 面板模式
 * `Ctrl + Shift + P`：快捷键打开命令面板
-* `extension.readNovel`: 命令面板输入这个，上传小说txt文件.
+* `extension.readNovel`/ `goodRead`: 命令面板输入这个，上传小说txt文件.
+* `打开Webview开发人员工具`：命令面板输入这个,可以打开页面控制台
 
 ## 侧边栏模式
 * 点击左侧图标：打开左侧面板
 * 点击上传按钮: 上传小说txt文件.
 
 ## 示例
-<img src="demo3.jpg" alt="这是一个示例图片">
-
-<img src="demo2.jpg" alt="这是一个示例图片">
-
-<img src="demo.png" alt="这是一个示例图片">
+ 
+ None.
 
 ## Known Issues
 
@@ -37,7 +35,7 @@
 
  None.
 
-### 1.0.0
+### 0.0.3
 
 Initial release of ...
  

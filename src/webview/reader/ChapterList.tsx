@@ -35,8 +35,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
           const containerHeight = scrollContainer.clientHeight;
           const itemTop = activeItem.offsetTop;
           const itemHeight = activeItem.offsetHeight;
-          const scrollTop =
-            itemTop - containerHeight / 2 + itemHeight / 2;
+          const scrollTop = itemTop - containerHeight / 2 + itemHeight / 2;
           scrollContainer.scrollTo({
             top: scrollTop,
             behavior: "smooth",
@@ -53,14 +52,14 @@ const ChapterList: React.FC<ChapterListProps> = ({
   return (
     <div
       className={`${styles.chapterList} ${showChapterList ? styles.show : ""}`}
-      ref={listContainerRef}
-    >
+      ref={listContainerRef}>
       <div className={styles.searchGroup}>
         <Input.Search
           placeholder="搜索章节"
           onSearch={handleSearch}
           allowClear
           enterButton
+          size="small"
         />
       </div>
       <List
@@ -72,8 +71,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
             className={`${styles.chapterItem} ${
               index === currentIndex ? styles.active : ""
             }`}
-            onClick={() => onChapterClick(index)}
-          >
+            onClick={() => onChapterClick(index)}>
             {chapter.title}
           </List.Item>
         )}
@@ -83,4 +81,3 @@ const ChapterList: React.FC<ChapterListProps> = ({
 };
 
 export default ChapterList;
-

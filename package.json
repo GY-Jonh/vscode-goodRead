@@ -22,7 +22,7 @@
     "commands": [
       {
         "command": "extension.readNovel",
-        "title": "goodReadMain",
+        "title": "goodRead",
         "icon": {
           "light": "./icon.svg",
           "dark": "./icon.svg"
@@ -30,7 +30,7 @@
       },
       {
         "command": "extension.readNovel1",
-        "title": "goodRead",
+        "title": "goodRead1",
         "icon": {
           "light": "./icon.svg",
           "dark": "./icon.svg"
@@ -38,7 +38,7 @@
       },
       {
         "command": "extension.showMySidebar",
-        "title": "goodRead",
+        "title": "goodRead_showMySidebar",
         "icon": {
           "light": "./icon.svg",
           "dark": "./icon.svg"

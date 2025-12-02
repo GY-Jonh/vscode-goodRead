@@ -24,19 +24,25 @@ const ReaderToolbar: React.FC<ReaderToolbarProps> = ({
     <div className={styles.toolbar}>
       <Space>
         {canGoPrev && (
-          <Button size="small" icon={<LeftOutlined />} onClick={onPrev}>
+          <Button
+            type="text"
+            size="small"
+            // icon={<LeftOutlined />}
+            onClick={onPrev}>
             上一章
           </Button>
         )}
         <Button
+          type="text"
           size="small"
-          icon={<MenuOutlined />}
+          // icon={<MenuOutlined />}
           onClick={onToggleChapterList}>
           {showChapterList ? "隐藏目录" : "显示目录"}
         </Button>
         <Button
+          type="text"
           size="small"
-          icon={<RightOutlined />}
+          // icon={<RightOutlined />}
           onClick={onNext}
           disabled={!canGoNext}>
           下一章
