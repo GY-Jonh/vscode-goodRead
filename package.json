@@ -2,7 +2,7 @@
   "name": "good-read",
   "displayName": "goodRead",
   "description": "",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "GY",
   "engines": {
     "node": ">=18.0.0",
@@ -74,6 +74,22 @@
           "icon": "./icon.svg"
         }
       ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "extension.readNovel",
+          "when": "view == my-sidebar-view",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "extension.readNovel1",
+          "when": "view == my-sidebar-view",
+          "group": "inline"
+        }
+      ]
     }
   },
   "scripts": {
@@ -87,7 +103,8 @@
   },
   "devDependencies": {
     "@ant-design/icons": "^5.2.6",
-    "@rollup/rollup-win32-x64-msvc": "^4.53.3",
+    "@esbuild/darwin-x64": "0.21.5",
+    "@rollup/rollup-darwin-x64": "^4.55.2",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
     "@types/react": "^18.2.43",
@@ -96,6 +113,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "2.22.0",
     "antd": "^5.12.8",
     "eslint": "^8.57.0",
     "less": "^4.2.0",

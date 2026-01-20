@@ -18,21 +18,83 @@ function readAndParseFile(filePath) {
       if (err) return reject(err);
       currentIndex = 0;
       const encoding = detectEncoding(buffer);
+      console.log("检测到的文件编码:", encoding);
       const data = iconv.decode(buffer, encoding);
+      console.log("文件总长度:", data.length, "字符");
+      console.log("文件前500个字符预览:", data.substring(0, 500));
 
-      const chapterTitles =
-        data.match(
-          /^(\s*(?:正文\s*)?第[\d零〇一二两三四五六七八九十百千万]+章.*$(?=\n|$))|(\s*(?:正文\s*)?第[\d]+.*$(?=\n|$))/gm
-        ) || [];
+      // 扩展章节标题匹配模式，支持更多格式
+      const chapterPatterns = [
+        // 标准格式：第X章（支持正文前缀）
+        /^[\s]*(?:正文\s*)?第[\d零〇一二两三四五六七八九十百千万]+章[^\n\r]*$/gm,
+        // 数字格式：第123章 或 第 123 章（支持空格）
+        /^[\s]*第\s*[\d]+\s*章[^\n\r]*$/gmi,
+        // 简化格式：第一章、第二章等（纯中文数字）
+        /^[\s]*第[零〇一二两三四五六七八九十百千万]+章[^\n\r]*$/gm,
+        // 其他常见格式：Chapter X、章节X等
+        /^[\s]*(?:Chapter|章节|第)\s*[\d零〇一二两三四五六七八九十百千万]+[^\n\r]*$/gmi,
+        // 更宽松的匹配：只要包含"第"和"章"的行
+        /^[\s]*第[^\n\r]*章[^\n\r]*$/gm,
+      ];
+
+      let chapterTitles = [];
+      for (const pattern of chapterPatterns) {
+        const matches = data.match(pattern);
+        if (matches) {
+          console.log(`使用模式匹配到 ${matches.length} 个章节标题:`, pattern);
+          chapterTitles = matches;
+          break;
+        }
+      }
+
+      // 如果还是没匹配到，尝试更宽松的匹配
+      if (chapterTitles.length === 0) {
+        console.log("尝试更宽松的匹配模式...");
+        // 匹配包含"第"和"章"的行（不要求在同一行，但要求顺序）
+        const looseMatches = data.match(/^[^\n\r]*第[^\n\r]*章[^\n\r]*$/gm);
+        if (looseMatches && looseMatches.length > 0) {
+          console.log(`宽松模式匹配到 ${looseMatches.length} 个可能的章节标题`);
+          // 过滤掉太长的行（可能是正文内容）
+          chapterTitles = looseMatches.filter(title => {
+            const trimmed = title.trim();
+            // 章节标题通常不会太长（比如不超过100个字符）
+            return trimmed.length > 0 && trimmed.length < 100;
+          });
+          console.log(`过滤后剩余 ${chapterTitles.length} 个章节标题`);
+          if (chapterTitles.length > 0) {
+            console.log("前几个匹配示例:", chapterTitles.slice(0, 5));
+          }
+        } else {
+          console.log("宽松模式也未匹配到章节标题");
+          // 最后尝试：查找所有包含"第"的行
+          const allLinesWithDi = data.split(/\r?\n/).filter(line => {
+            const trimmed = line.trim();
+            return trimmed.includes("第") && trimmed.length < 100;
+          });
+          if (allLinesWithDi.length > 0) {
+            console.log(`找到 ${allLinesWithDi.length} 行包含'第'的内容，前5行:`, allLinesWithDi.slice(0, 5));
+          }
+        }
+      }
+
+      console.log("最终匹配到的章节标题数量:", chapterTitles.length);
+      if (chapterTitles.length > 0) {
+        console.log("前3个章节标题示例:", chapterTitles.slice(0, 3));
+      }
+
       const chapters = [];
 
       for (let i = 0; i < chapterTitles.length; i++) {
-        const chapterTitle = chapterTitles[i];
+        const chapterTitle = chapterTitles[i].trim();
         const chapterStart = data.indexOf(chapterTitle);
+        if (chapterStart === -1) {
+          console.warn(`未找到章节标题在文件中的位置: ${chapterTitle}`);
+          continue;
+        }
         const chapterEnd =
           i === chapterTitles.length - 1
             ? data.length
-            : data.indexOf(chapterTitles[i + 1]);
+            : data.indexOf(chapterTitles[i + 1].trim());
 
         const chapterContent = data.substring(chapterStart, chapterEnd).trim();
         const chapterNumber = extractChapterNumber(chapterTitle);
@@ -44,6 +106,7 @@ function readAndParseFile(filePath) {
         });
       }
 
+      console.log("解析完成的章节数量:", chapters.length);
       resolve(chapters);
     });
   });
@@ -68,10 +131,57 @@ function extractChapterNumber(title) {
 }
 
 function detectEncoding(buffer) {
-  // 这里可以添加更复杂的检测逻辑，比如使用第三方库
-  // 本例中仅作简单示例，假设文件是GBK编码
+  // 使用 jschardet 检测编码
   const result = jschardet.detect(buffer);
-  return result.encoding || "utf-8"; // 如果检测失败，默认使用 utf-8
+  console.log("jschardet 检测结果:", result);
+  
+  // 常见的中文编码列表，按优先级排序
+  const encodingsToTry = [];
+  
+  if (result && result.encoding && result.confidence > 0.5) {
+    // 如果检测到编码且置信度较高，优先使用
+    const detectedEncoding = result.encoding.toLowerCase();
+    if (detectedEncoding.includes("gb") || detectedEncoding.includes("gbk") || detectedEncoding.includes("gb2312")) {
+      encodingsToTry.push("gbk");
+    } else if (detectedEncoding.includes("big5")) {
+      encodingsToTry.push("big5");
+    } else if (detectedEncoding.includes("utf-8") || detectedEncoding.includes("utf8")) {
+      encodingsToTry.push("utf-8");
+    } else {
+      encodingsToTry.push(detectedEncoding);
+    }
+  }
+  
+  // 添加常见的中文编码作为备选
+  encodingsToTry.push("gbk", "gb2312", "utf-8", "big5");
+  
+  // 去重
+  const uniqueEncodings = [...new Set(encodingsToTry)];
+  
+  // 尝试每个编码，检查解码后的内容是否包含中文字符
+  for (const encoding of uniqueEncodings) {
+    try {
+      const decoded = iconv.decode(buffer, encoding);
+      // 检查是否包含中文字符（Unicode 范围：\u4e00-\u9fff）
+      const chineseCharPattern = /[\u4e00-\u9fff]/;
+      const hasChinese = chineseCharPattern.test(decoded.substring(0, 1000));
+      
+      // 检查是否包含常见的章节关键词
+      const hasChapterKeywords = /第[\d零〇一二两三四五六七八九十百千万]+章/.test(decoded.substring(0, 5000));
+      
+      if (hasChinese || hasChapterKeywords) {
+        console.log(`编码 ${encoding} 解码成功，包含中文字符: ${hasChinese}, 包含章节关键词: ${hasChapterKeywords}`);
+        return encoding;
+      }
+    } catch (error) {
+      console.log(`编码 ${encoding} 解码失败:`, error.message);
+      continue;
+    }
+  }
+  
+  // 如果所有编码都失败，默认使用 gbk（中文小说最常见的编码）
+  console.log("所有编码尝试失败，默认使用 gbk");
+  return "gbk";
 }
 
 function showNovelInWebview(chapters, webviewPanel) {
@@ -237,34 +347,49 @@ function activate(context) {
     let disposable = vscode.commands.registerCommand(
       "extension.readNovel",
       async () => {
-        const fileUri = await vscode.window.showOpenDialog({
-          canSelectFiles: true,
-          canSelectFolders: false,
-          canSelectMany: false,
-        });
-        if (fileUri && fileUri.length > 0) {
-          const filePath = fileUri[0].fsPath;
-          try {
-            const chapters = await readAndParseFile(filePath);
-            const webviewPanel = vscode.window.createWebviewPanel(
-              "novelReader",
-              "reading",
-              vscode.ViewColumn.One,
-              {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-                // 添加这一行以允许加载本地资源
-                localResourceRoots: [
-                  vscode.Uri.file(path.join(__dirname, "dist")),
-                ],
-              }
-            );
-            showNovelInWebview(chapters, webviewPanel);
-          } catch (error) {
-            vscode.window.showErrorMessage(
-              "Failed to read and parse the novel."
-            );
+        console.log("=== extension.readNovel 命令被调用 ===");
+        try {
+          const fileUri = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false,
+            openLabel: "选择小说文件",
+          });
+          console.log("文件选择对话框返回:", fileUri);
+          if (fileUri && fileUri.length > 0) {
+            const filePath = fileUri[0].fsPath;
+            console.log("选择的文件路径:", filePath);
+            try {
+              const chapters = await readAndParseFile(filePath);
+              console.log("解析到章节数:", chapters.length);
+              const webviewPanel = vscode.window.createWebviewPanel(
+                "novelReader",
+                "reading",
+                vscode.ViewColumn.One,
+                {
+                  enableScripts: true,
+                  retainContextWhenHidden: true,
+                  // 添加这一行以允许加载本地资源
+                  localResourceRoots: [
+                    vscode.Uri.file(path.join(__dirname, "dist")),
+                  ],
+                }
+              );
+              showNovelInWebview(chapters, webviewPanel);
+            } catch (error) {
+              console.error("读取和解析文件失败:", error);
+              vscode.window.showErrorMessage(
+                `Failed to read and parse the novel: ${error.message}`
+              );
+            }
+          } else {
+            console.log("用户取消了文件选择");
           }
+        } catch (error) {
+          console.error("显示文件选择对话框失败:", error);
+          vscode.window.showErrorMessage(
+            `Failed to show file dialog: ${error.message}`
+          );
         }
       }
     );
@@ -352,6 +477,15 @@ MySidebarViewProvider.prototype = {
       retainContextWhenHidden: true, // 关键设置
       localResourceRoots: [vscode.Uri.file(path.join(__dirname, "dist"))],
     };
+
+    // 监听视图可见性变化
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        console.log("侧边栏视图变为可见");
+        // 如果视图可见且没有内容，可以选择自动执行命令
+        // 注意：这里不自动执行，因为用户可能只是想查看视图
+      }
+    });
 
     this._view.webview.onDidReceiveMessage((message) => {
       switch (message.command) {
